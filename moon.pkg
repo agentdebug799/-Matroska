@@ -1,1 +1,6 @@
 // Pure MoonBit; the Matroska demuxer uses only the standard library.
+
+import {
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "moonbitlang/core/math" @math,
+}
