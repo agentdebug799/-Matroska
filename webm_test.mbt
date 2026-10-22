@@ -66,6 +66,7 @@ test "parse a real ffmpeg-authored WebM" {
   assert_eq(video_track.number, 1)
   assert_eq(video_track.track_type, 1)
   assert_eq(video_track.codec_id, "V_VP9")
+  assert_eq(video_track.codec_private, b"")
   assert_eq(video_track.language, "und")
   match video_track.video {
     Some(v) => {
@@ -79,6 +80,7 @@ test "parse a real ffmpeg-authored WebM" {
   assert_eq(audio_track.number, 2)
   assert_eq(audio_track.track_type, 2)
   assert_eq(audio_track.codec_id, "A_OPUS")
+  assert_eq(audio_track.codec_private, b"\x4F\x70\x75\x73\x48\x65\x61\x64\x01\x02\x38\x01\x80\xBB\x00\x00\x00\x00\x00")
   assert_eq(audio_track.language, "und")
   match audio_track.audio {
     Some(a) => {

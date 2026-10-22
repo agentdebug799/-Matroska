@@ -23,6 +23,9 @@ pub struct Track {
   track_type : Int
   /// The codec identifier, e.g. "V_VP8" or "A_OPUS".
   codec_id : String
+  /// Codec-private initialization data (e.g. the OpusHead for A_OPUS), empty
+  /// when the track has none.
+  codec_private : Bytes
   language : String
   flag_enabled : Bool
   flag_default : Bool
@@ -60,6 +63,7 @@ fn read_track_entry(r : Reader, size : Int) -> Track raise MatroskaError {
   let mut uid = 0
   let mut track_type = 0
   let mut codec_id = ""
+  let mut codec_private = b""
   let mut language = "eng"
   let mut flag_enabled = true
   let mut flag_default = true
@@ -78,6 +82,8 @@ fn read_track_entry(r : Reader, size : Int) -> Track raise MatroskaError {
       track_type = read_uint(r, n)
     } else if e.id == CodecID {
       codec_id = read_string(r, n)
+    } else if e.id == CodecPrivate {
+      codec_private = r.read_bytes(n)
     } else if e.id == Language {
       language = read_string(r, n)
     } else if e.id == FlagEnabled {
@@ -101,6 +107,7 @@ fn read_track_entry(r : Reader, size : Int) -> Track raise MatroskaError {
     uid: uid,
     track_type: track_type,
     codec_id: codec_id,
+    codec_private: codec_private,
     language: language,
     flag_enabled: flag_enabled,
     flag_default: flag_default,
