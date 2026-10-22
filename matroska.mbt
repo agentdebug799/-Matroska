@@ -6,13 +6,14 @@ pub struct Document {
   header : EbmlHeader
   info : Info
   tracks : Tracks
+  clusters : Array[Cluster]
 }
 
 /// Parse a complete Matroska/WebM byte stream.
 ///
 /// Reads the EBML header, then the single top-level Segment, extracting its
-/// `Info` and `Tracks`. Other top-level elements (Clusters, Cues, ...) are
-/// skipped for now.
+/// `Info`, `Tracks` and `Cluster`s. Other top-level elements (Cues, ...) are
+/// skipped.
 pub fn parse(data : Bytes) -> Document raise MatroskaError {
   let r = Reader::new(data)
   let header = read_ebml_header(r)
@@ -23,6 +24,7 @@ pub fn parse(data : Bytes) -> Document raise MatroskaError {
   let limit = if seg.unknown_size { -1 } else { r.pos() + seg.size.to_int() }
   let mut info : Option[Info] = None
   let mut tracks : Option[Tracks] = None
+  let clusters : Array[Cluster] = []
   while r.remaining() > 0 && (limit < 0 || r.pos() < limit) {
     let e = read_element(r)
     let n = e.size.to_int()
@@ -30,12 +32,14 @@ pub fn parse(data : Bytes) -> Document raise MatroskaError {
       info = Some(read_info(r, n))
     } else if e.id == Tracks {
       tracks = Some(read_tracks(r, n))
+    } else if e.id == Cluster {
+      clusters.push(read_cluster(r, n))
     } else {
       r.skip(n)
     }
   }
   match (info, tracks) {
-    (Some(i), Some(t)) => { header: header, info: i, tracks: t }
+    (Some(i), Some(t)) => { header: header, info: i, tracks: t, clusters: clusters }
     _ => raise InvalidEbml
   }
 }

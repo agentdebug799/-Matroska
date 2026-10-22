@@ -31,6 +31,11 @@ for t in doc.tracks.entries {
 - **Segment / Info / Tracks** — the top-level `parse` API extracts the segment's
   timing (`Info`) and the full track table (`Tracks`), including audio and video
   track parameters.
+- **Clusters / Blocks** — `parse` also walks every `Cluster`, decoding
+  `SimpleBlock` and `BlockGroup` children into per-track frames with absolute
+  timecodes and keyframe flags.
+- **Block lacing** — Xiph, fixed and EBML lacing are all decoded, so a single
+  block that carries several frames is split into its constituent frames.
 
 ## Run the demo
 
@@ -53,14 +58,16 @@ track table.
 | `header.mbt` | EBML header parsing and validation |
 | `info.mbt` | `Info` element |
 | `tracks.mbt` | `Tracks` / `TrackEntry` / `Video` / `Audio` |
+| `block.mbt` | `Block` / `SimpleBlock` + lacing (Xiph / fixed / EBML) |
+| `cluster.mbt` | `Cluster` / `Frame` extraction |
 | `matroska.mbt` | top-level `parse` API |
 
 ## Roadmap
 
 - [x] EBML header validation (DocType, version bounds)
 - [x] Segment / Info / Tracks traversal
-- [ ] Cluster + SimpleBlock / BlockGroup frame extraction
-- [ ] Block lacing (Xiph / fixed / EBML)
+- [x] Cluster + SimpleBlock / BlockGroup frame extraction
+- [x] Block lacing (Xiph / fixed / EBML)
 - [ ] SeekHead-based random access
 
 ## License

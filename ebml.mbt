@@ -82,7 +82,8 @@ pub const SamplingFrequency : Int = 0xB5
 pub const Channels : Int = 0x9F
 pub const BitDepth : Int = 0x6264
 
-/// Cluster block elements.
+/// Cluster children and block elements.
+pub const ClusterTimecode : Int = 0xE7
 pub const SimpleBlock : Int = 0xA3
 pub const BlockGroup : Int = 0xA0
 pub const Block : Int = 0xA1
