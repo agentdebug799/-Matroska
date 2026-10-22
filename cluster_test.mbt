@@ -12,6 +12,7 @@ test "read_cluster extracts timecode and SimpleBlock frames" {
   assert_eq(c.frames[0].track_number, 1)
   assert_eq(c.frames[0].timecode, 0)
   assert_true(c.frames[0].keyframe)
+  assert_eq(c.frames[0].duration, 0)
   assert_eq(c.frames[0].data, b"\x41\x42\x43")
 }
 
@@ -25,6 +26,7 @@ test "read_cluster extracts frames from a BlockGroup" {
   assert_eq(c.frames[0].track_number, 1)
   assert_eq(c.frames[0].timecode, 100)
   assert_false(c.frames[0].keyframe)
+  assert_eq(c.frames[0].duration, 10)
   assert_eq(c.frames[0].data, b"\x44")
 }
 
