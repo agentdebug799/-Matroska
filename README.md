@@ -36,6 +36,12 @@ for t in doc.tracks.entries {
   timecodes and keyframe flags.
 - **Block lacing** — Xiph, fixed and EBML lacing are all decoded, so a single
   block that carries several frames is split into its constituent frames.
+- **Codec-private data** — each track exposes its `CodecPrivate` bytes (e.g. the
+  OpusHead for `A_OPUS`).
+- **Frame duration** — a `Block` inside a `BlockGroup` reports its
+  `BlockDuration` on every frame it produces.
+- **SeekHead / Cues** — the segment's random-access indices are parsed into
+  typed seek entries and cue points.
 
 ## Run the demo
 
@@ -64,6 +70,8 @@ WebM (Lavf60.16.100): one VP9 video track (854×480) plus one Opus audio track
 | `tracks.mbt` | `Tracks` / `TrackEntry` / `Video` / `Audio` |
 | `block.mbt` | `Block` / `SimpleBlock` + lacing (Xiph / fixed / EBML) |
 | `cluster.mbt` | `Cluster` / `Frame` extraction |
+| `seek.mbt` | `SeekHead` / `SeekEntry` index |
+| `cues.mbt` | `Cues` / `CuePoint` / `CueTrackPosition` |
 | `matroska.mbt` | top-level `parse` API |
 
 ## Roadmap
@@ -72,7 +80,8 @@ WebM (Lavf60.16.100): one VP9 video track (854×480) plus one Opus audio track
 - [x] Segment / Info / Tracks traversal
 - [x] Cluster + SimpleBlock / BlockGroup frame extraction
 - [x] Block lacing (Xiph / fixed / EBML)
-- [ ] SeekHead-based random access
+- [x] SeekHead-based random access
+- [x] Cues seek points
 
 ## License
 
