@@ -7,6 +7,7 @@ pub struct Document {
   info : Info
   tracks : Tracks
   seek_head : Option[SeekHead]
+  cues : Option[Cues]
   clusters : Array[Cluster]
 }
 
@@ -26,6 +27,7 @@ pub fn parse(data : Bytes) -> Document raise MatroskaError {
   let mut info : Option[Info] = None
   let mut tracks : Option[Tracks] = None
   let mut seek_head : Option[SeekHead] = None
+  let mut cues : Option[Cues] = None
   let clusters : Array[Cluster] = []
   while r.remaining() > 0 && (limit < 0 || r.pos() < limit) {
     let e = read_element(r)
@@ -36,6 +38,8 @@ pub fn parse(data : Bytes) -> Document raise MatroskaError {
       tracks = Some(read_tracks(r, n))
     } else if e.id == SeekHead {
       seek_head = Some(read_seek_head(r, n))
+    } else if e.id == Cues {
+      cues = Some(read_cues(r, n))
     } else if e.id == Cluster {
       clusters.push(read_cluster(r, n))
     } else {
@@ -43,7 +47,7 @@ pub fn parse(data : Bytes) -> Document raise MatroskaError {
     }
   }
   match (info, tracks) {
-    (Some(i), Some(t)) => { header: header, info: i, tracks: t, seek_head: seek_head, clusters: clusters }
+    (Some(i), Some(t)) => { header: header, info: i, tracks: t, seek_head: seek_head, cues: cues, clusters: clusters }
     _ => raise InvalidEbml
   }
 }

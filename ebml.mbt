@@ -94,3 +94,11 @@ pub const ReferenceBlock : Int = 0xFB
 pub const Seek : Int = 0x4DBB
 pub const SeekID : Int = 0x53AB
 pub const SeekPosition : Int = 0x53AC
+
+/// Cues children.
+pub const CuePoint : Int = 0xBB
+pub const CueTime : Int = 0xB3
+pub const CueTrackPositions : Int = 0xB7
+pub const CueTrack : Int = 0xF7
+pub const CueClusterPosition : Int = 0xF1
+pub const CueBlockNumber : Int = 0x5378
