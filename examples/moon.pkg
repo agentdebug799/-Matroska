@@ -1,7 +1,6 @@
-// Demo executable that walks a hand-built Matroska document head.
+// Demo executable that parses a hand-built Matroska document.
 import {
   "agentdebug799/matroska" @matroska,
-  "moonbitlang/core/encoding/utf8" @utf8,
 }
 
 pkgtype(kind: "executable")

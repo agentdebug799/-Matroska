@@ -9,21 +9,28 @@ individual blocks that carry audio, video and subtitle frames — and hands you
 typed values instead of raw bytes.
 
 ```moonbit
-let r = @matroska.Reader::new(data)
-let ebml = @matroska.read_element(r)          // the EBML header
-let seg  = @matroska.read_element(r)          // the following Segment
-// ...
+let doc = @matroska.parse(data)   // Bytes -> Document
+println(doc.header.doctype)       // "matroska" or "webm"
+println(doc.info.timecode_scale)  // nanoseconds per timecode tick
+for t in doc.tracks.entries {
+  // t.codec_id, t.track_type, t.audio, t.video, ...
+}
 ```
 
 ## What works today
 
 - **EBML VINT** — decode/encode the 1–8 byte variable-length integers that carry
   every element ID and size, including the reserved "unknown size" marker.
-- **Big-endian reader** — a small cursor with `read_u8`…`read_u64`, `read_bytes`
-  and bounds checking that raises `MatroskaError` instead of overflowing.
+- **Big-endian reader** — a cursor with `read_u8`…`read_u64`, `read_bytes` and
+  bounds checking that raises `MatroskaError` instead of overflowing.
 - **Element headers** — split a stream into `{ id, size, header_len }`, with the
-  full Matroska/WebM element-ID table (EBML header, Segment, Info, Tracks,
-  Cluster, SimpleBlock, …).
+  full Matroska/WebM element-ID table.
+- **Payload decoders** — unsigned integers, UTF-8 strings and IEEE 754 floats
+  (binary32 and binary64).
+- **EBML header validation** — reject unknown doctypes and malformed headers.
+- **Segment / Info / Tracks** — the top-level `parse` API extracts the segment's
+  timing (`Info`) and the full track table (`Tracks`), including audio and video
+  track parameters.
 
 ## Run the demo
 
@@ -31,7 +38,8 @@ let seg  = @matroska.read_element(r)          // the following Segment
 moon run examples
 ```
 
-It parses a hand-built EBML header and prints each document element by name.
+It parses a hand-built Matroska document and prints its doctype, timing, and
+track table.
 
 ## Module map
 
@@ -41,11 +49,16 @@ It parses a hand-built EBML header and prints each document element by name.
 | `reader.mbt` | big-endian byte cursor |
 | `vint.mbt` | EBML variable-length integers |
 | `ebml.mbt` | element headers + element-ID table |
+| `payload.mbt` | unsigned-int / string / float payload decoders |
+| `header.mbt` | EBML header parsing and validation |
+| `info.mbt` | `Info` element |
+| `tracks.mbt` | `Tracks` / `TrackEntry` / `Video` / `Audio` |
+| `matroska.mbt` | top-level `parse` API |
 
 ## Roadmap
 
-- [ ] EBML header validation (DocType, version bounds)
-- [ ] Segment / Info / Tracks traversal
+- [x] EBML header validation (DocType, version bounds)
+- [x] Segment / Info / Tracks traversal
 - [ ] Cluster + SimpleBlock / BlockGroup frame extraction
 - [ ] Block lacing (Xiph / fixed / EBML)
 - [ ] SeekHead-based random access
