@@ -46,6 +46,10 @@ moon run examples
 It parses a hand-built Matroska document and prints its doctype, timing, and
 track table.
 
+The test suite also includes a regression that parses a real, ffmpeg-authored
+WebM (Lavf60.16.100): one VP9 video track (854×480) plus one Opus audio track
+(48 kHz, 2 ch), and its first cluster frame.
+
 ## Module map
 
 | File | Responsibility |
