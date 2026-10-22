@@ -11,6 +11,10 @@ pub struct Frame {
   /// Frame duration in ticks, or 0 when unknown (SimpleBlocks carry no
   /// duration; a Block inside a BlockGroup reports its `BlockDuration`).
   duration : Int
+  /// The frames this block depends on, as `ReferenceBlock` values relative to
+  /// this frame's own timecode (negative = an earlier frame). Empty for
+  /// SimpleBlocks and for BlockGroups without reference blocks.
+  references : Array[Int]
   /// The raw frame payload.
   data : Bytes
 }
@@ -34,7 +38,7 @@ pub fn read_cluster(r : Reader, size : Int) -> Cluster raise MatroskaError {
     if e.id == ClusterTimecode {
       timecode = read_uint(r, n)
     } else if e.id == SimpleBlock {
-      collect_block_frames(r, n, timecode, 0, frames)
+      collect_block_frames(r, n, timecode, 0, [], frames)
     } else if e.id == BlockGroup {
       read_block_group(r, n, timecode, frames)
     } else {
@@ -45,7 +49,7 @@ pub fn read_cluster(r : Reader, size : Int) -> Cluster raise MatroskaError {
 }
 
 /// Expand one Block/SimpleBlock into its frames and append them.
-fn collect_block_frames(r : Reader, size : Int, cluster_timecode : Int, duration : Int, frames : Array[Frame]) -> Unit raise MatroskaError {
+fn collect_block_frames(r : Reader, size : Int, cluster_timecode : Int, duration : Int, references : Array[Int], frames : Array[Frame]) -> Unit raise MatroskaError {
   let b = read_block(r, size)
   let mut i = 0
   while i < b.frames.length() {
@@ -54,6 +58,7 @@ fn collect_block_frames(r : Reader, size : Int, cluster_timecode : Int, duration
       timecode: cluster_timecode + b.timecode,
       keyframe: b.keyframe,
       duration: duration,
+      references: references,
       data: b.frames[i],
     })
     i = i + 1
@@ -67,6 +72,7 @@ fn collect_block_frames(r : Reader, size : Int, cluster_timecode : Int, duration
 fn read_block_group(r : Reader, size : Int, cluster_timecode : Int, frames : Array[Frame]) -> Unit raise MatroskaError {
   let end = r.pos() + size
   let mut duration = 0
+  let references : Array[Int] = []
   let mut block_bytes : Option[Bytes] = None
   while r.pos() < end {
     let e = read_element(r)
@@ -75,14 +81,16 @@ fn read_block_group(r : Reader, size : Int, cluster_timecode : Int, frames : Arr
       block_bytes = Some(r.read_bytes(n))
     } else if e.id == BlockDuration {
       duration = read_uint(r, n)
+    } else if e.id == ReferenceBlock {
+      references.push(read_signed(r, n))
     } else {
-      r.skip(n) // ReferenceBlock, ...
+      r.skip(n)
     }
   }
   match block_bytes {
     Some(b) => {
       let br = Reader::new(b)
-      collect_block_frames(br, b.length(), cluster_timecode, duration, frames)
+      collect_block_frames(br, b.length(), cluster_timecode, duration, references, frames)
     }
     None => ()
   }

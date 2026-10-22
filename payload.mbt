@@ -17,6 +17,23 @@ pub fn read_uint(r : Reader, n : Int) -> Int raise MatroskaError {
   v
 }
 
+/// Decode a signed big-endian integer from the next `n` bytes (1..=4).
+///
+/// The value is two's complement: the most-significant bit of the first byte
+/// is the sign. Sign extension is applied as each byte is shifted in, so the
+/// result is correct for any width without computing a 2^(8n) mask. Used for
+/// Matroska signed fields such as `ReferenceBlock`.
+pub fn read_signed(r : Reader, n : Int) -> Int raise MatroskaError {
+  let first = r.read_u8()
+  let mut v = if first >= 0x80 { first - 0x100 } else { first }
+  let mut i = 1
+  while i < n {
+    v = (v << 8) | r.read_u8()
+    i = i + 1
+  }
+  v
+}
+
 /// Decode a UTF-8 string from the next `n` bytes.
 pub fn read_string(r : Reader, n : Int) -> String raise MatroskaError {
   @utf8.decode_lossy(r.read_bytes(n))

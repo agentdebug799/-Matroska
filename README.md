@@ -40,6 +40,9 @@ for t in doc.tracks.entries {
   OpusHead for `A_OPUS`).
 - **Frame duration** — a `Block` inside a `BlockGroup` reports its
   `BlockDuration` on every frame it produces.
+- **Reference blocks** — a `BlockGroup`'s `ReferenceBlock` children are exposed
+  as the frame's `references` (timecode offsets relative to the frame itself,
+  negative for backward references).
 - **SeekHead / Cues** — the segment's random-access indices are parsed into
   typed seek entries and cue points.
 
