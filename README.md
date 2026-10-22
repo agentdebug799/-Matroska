@@ -31,6 +31,9 @@ for t in doc.tracks.entries {
 - **Segment / Info / Tracks** — the top-level `parse` API extracts the segment's
   timing (`Info`) and the full track table (`Tracks`), including audio and video
   track parameters.
+- **Video display size** — each video track also reports its display dimensions
+  and unit (`DisplayWidth` / `DisplayHeight` / `DisplayUnit`), so anamorphic
+  and aspect-ratio-corrected playback is available.
 - **Clusters / Blocks** — `parse` also walks every `Cluster`, decoding
   `SimpleBlock` and `BlockGroup` children into per-track frames with absolute
   timecodes and keyframe flags.

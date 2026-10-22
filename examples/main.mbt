@@ -43,7 +43,10 @@ fn main {
           None => ()
         }
         match t.video {
-          Some(v) => println("      video \{v.pixel_width}x\{v.pixel_height}")
+          Some(v) => {
+            let disp = if v.display_width == 0 { "" } else { " (display \{v.display_width}x\{v.display_height})" }
+            println("      video \{v.pixel_width}x\{v.pixel_height}\{disp}")
+          }
           None => ()
         }
         i = i + 1

@@ -1,10 +1,16 @@
 ///|
 /// The Segment `Tracks` element: the list of audio/video/subtitle tracks.
 
-/// A video track's pixel dimensions.
+/// A video track's pixel dimensions and display size.
 pub struct Video {
   pixel_width : Int
   pixel_height : Int
+  /// How `display_width`/`display_height` are interpreted: 0 = pixels,
+  /// 1 = centimeters, 2 = inches, 3 = display aspect ratio, 4 = unknown.
+  display_unit : Int
+  /// Display width/height; 0 means "same as the pixel dimensions".
+  display_width : Int
+  display_height : Int
 }
 
 /// An audio track's format.
@@ -123,6 +129,9 @@ fn read_video(r : Reader, size : Int) -> Video raise MatroskaError {
   let end = r.pos() + size
   let mut pixel_width = 0
   let mut pixel_height = 0
+  let mut display_unit = 0
+  let mut display_width = 0
+  let mut display_height = 0
   while r.pos() < end {
     let e = read_element(r)
     let n = e.size.to_int()
@@ -130,11 +139,23 @@ fn read_video(r : Reader, size : Int) -> Video raise MatroskaError {
       pixel_width = read_uint(r, n)
     } else if e.id == PixelHeight {
       pixel_height = read_uint(r, n)
+    } else if e.id == DisplayUnit {
+      display_unit = read_uint(r, n)
+    } else if e.id == DisplayWidth {
+      display_width = read_uint(r, n)
+    } else if e.id == DisplayHeight {
+      display_height = read_uint(r, n)
     } else {
       r.skip(n)
     }
   }
-  { pixel_width: pixel_width, pixel_height: pixel_height }
+  {
+    pixel_width: pixel_width,
+    pixel_height: pixel_height,
+    display_unit: display_unit,
+    display_width: display_width,
+    display_height: display_height,
+  }
 }
 
 /// Read an `Audio` element of `size` payload bytes.
