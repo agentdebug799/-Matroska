@@ -52,3 +52,27 @@ test "read_cluster skips unknown child elements" {
   assert_eq(c.timecode, 100)
   assert_eq(c.frames[0].data, b"\x45")
 }
+
+test "laced frames share one timestamp and report lacing position" {
+  // Cluster (timecode 10) with a fixed-laced SimpleBlock (track 1, relative
+  // timecode 5) carrying three 2-byte frames. The container stores one
+  // timestamp for the whole block; the demuxer hands out all three frames
+  // with that same timecode (15 ticks) and their lacing index, leaving the
+  // 2nd/3rd frames' presentation times to the codec's sample duration.
+  let r = @matroska.Reader::new(b"\x1F\x43\xB6\x75\x90\xE7\x81\x0A\xA3\x8B\x81\x00\x05\x84\x02\x41\x42\x43\x44\x45\x46")
+  let e = @matroska.read_element(r)
+  let c = @matroska.read_cluster(r, e.size.to_int())
+  assert_eq(c.timecode, 10)
+  assert_eq(c.frames.length(), 3)
+  let mut i = 0
+  while i < 3 {
+    assert_eq(c.frames[i].timecode, 15)
+    assert_eq(c.frames[i].lacing_count, 3)
+    assert_eq(c.frames[i].lacing_index, i)
+    assert_eq(c.frames[i].duration, 0)
+    i = i + 1
+  }
+  assert_eq(c.frames[0].data, b"\x41\x42")
+  assert_eq(c.frames[1].data, b"\x43\x44")
+  assert_eq(c.frames[2].data, b"\x45\x46")
+}

@@ -15,6 +15,12 @@ pub struct Frame {
   /// this frame's own timecode (negative = an earlier frame). Empty for
   /// SimpleBlocks and for BlockGroups without reference blocks.
   references : Array[Int]
+  /// Position of this frame within its laced block (0 = first). Frames of a
+  /// laced block share one timestamp; only the codec can turn a later
+  /// `lacing_index` into a presentation time.
+  lacing_index : Int
+  /// Total frames the block carried (1 when not laced).
+  lacing_count : Int
   /// The raw frame payload.
   data : Bytes
 }
@@ -59,6 +65,8 @@ fn collect_block_frames(r : Reader, size : Int, cluster_timecode : Int, duration
       keyframe: b.keyframe,
       duration: duration,
       references: references,
+      lacing_index: i,
+      lacing_count: b.frames.length(),
       data: b.frames[i],
     })
     i = i + 1

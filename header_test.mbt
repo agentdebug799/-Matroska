@@ -38,3 +38,16 @@ test "read_ebml_header rejects a stream that is not an EBML header" {
   }
   assert_true(caught)
 }
+
+test "read_ebml_header refuses a DocTypeReadVersion above 2" {
+  // A webm header declaring DocTypeReadVersion 3: this reader implements
+  // read version 2 (as Matroska v4 and WebM both require), so it refuses.
+  let data = b"\x1A\x45\xDF\xA3\x8F\x42\x82\x84\x77\x65\x62\x6D\x42\x87\x81\x02\x42\x85\x81\x03"
+  let caught = try {
+    let _ = @matroska.read_ebml_header(@matroska.Reader::new(data))
+    false
+  } catch {
+    _ => true
+  }
+  assert_true(caught)
+}

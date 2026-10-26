@@ -38,6 +38,12 @@ pub struct Track {
   flag_lacing : Bool
   /// Default frame duration in nanoseconds (0 when absent).
   default_duration : Int
+  /// Decoder delay in nanoseconds (`CodecDelay`, e.g. Opus pre-skip); 0 when
+  /// absent. Downstream must subtract this from the first frame's timestamp to
+  /// get its presentation time.
+  codec_delay : Int
+  /// Decoder pre-roll in nanoseconds (`SeekPreRoll`); 0 when absent.
+  seek_pre_roll : Int
   video : Option[Video]
   audio : Option[Audio]
 }
@@ -75,6 +81,8 @@ fn read_track_entry(r : Reader, size : Int) -> Track raise MatroskaError {
   let mut flag_default = true
   let mut flag_lacing = true
   let mut default_duration = 0
+  let mut codec_delay = 0
+  let mut seek_pre_roll = 0
   let mut video : Option[Video] = None
   let mut audio : Option[Audio] = None
   while r.pos() < end {
@@ -100,6 +108,10 @@ fn read_track_entry(r : Reader, size : Int) -> Track raise MatroskaError {
       flag_lacing = read_uint(r, n) != 0
     } else if e.id == DefaultDuration {
       default_duration = read_uint(r, n)
+    } else if e.id == CodecDelay {
+      codec_delay = read_uint(r, n)
+    } else if e.id == SeekPreRoll {
+      seek_pre_roll = read_uint(r, n)
     } else if e.id == Video {
       video = Some(read_video(r, n))
     } else if e.id == Audio {
@@ -119,6 +131,8 @@ fn read_track_entry(r : Reader, size : Int) -> Track raise MatroskaError {
     flag_default: flag_default,
     flag_lacing: flag_lacing,
     default_duration: default_duration,
+    codec_delay: codec_delay,
+    seek_pre_roll: seek_pre_roll,
     video: video,
     audio: audio,
   }

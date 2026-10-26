@@ -24,3 +24,15 @@ test "read_tracks extracts video display size" {
     None => assert_true(false)
   }
 }
+
+test "read_tracks exposes CodecDelay and SeekPreRoll" {
+  // One TrackEntry with CodecDelay = 6500000 ns (Opus pre-skip) and
+  // SeekPreRoll = 80000000 ns. The demuxer surfaces both so a downstream
+  // decoder can trim the first samples and buffer pre-roll.
+  let r = @matroska.Reader::new(b"\x16\x54\xAE\x6B\x9A\xAE\x98\xD7\x81\x01\x86\x86\x41\x5F\x4F\x50\x55\x53\x56\xAA\x83\x63\x2E\xA0\x56\xBB\x84\x04\xC4\xB4\x00")
+  let e = @matroska.read_element(r)
+  assert_eq(e.id, @matroska.Tracks)
+  let t = @matroska.read_tracks(r, e.size.to_int())
+  assert_eq(t.entries[0].codec_delay, 6500000)
+  assert_eq(t.entries[0].seek_pre_roll, 80000000)
+}

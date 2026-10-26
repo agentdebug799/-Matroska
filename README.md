@@ -27,7 +27,9 @@ for t in doc.tracks.entries {
   full Matroska/WebM element-ID table.
 - **Payload decoders** — unsigned integers, UTF-8 strings and IEEE 754 floats
   (binary32 and binary64).
-- **EBML header validation** — reject unknown doctypes and malformed headers.
+- **EBML header validation** — accept the `matroska` and `webm` doctypes and
+  refuse a document whose `DocTypeReadVersion` exceeds 2 (the read version
+  Matroska v4 and WebM both require).
 - **Segment / Info / Tracks** — the top-level `parse` API extracts the segment's
   timing (`Info`) and the full track table (`Tracks`), including audio and video
   track parameters.
@@ -37,10 +39,14 @@ for t in doc.tracks.entries {
 - **Clusters / Blocks** — `parse` also walks every `Cluster`, decoding
   `SimpleBlock` and `BlockGroup` children into per-track frames with absolute
   timecodes and keyframe flags.
-- **Block lacing** — Xiph, fixed and EBML lacing are all decoded, so a single
-  block that carries several frames is split into its constituent frames.
+- **Block lacing** — Xiph, fixed and EBML lacing are all decoded; each frame
+  reports its `lacing_index` and `lacing_count`, and laced frames share one
+  timestamp (see the timing contract below).
 - **Codec-private data** — each track exposes its `CodecPrivate` bytes (e.g. the
   OpusHead for `A_OPUS`).
+- **Codec delay / pre-roll** — each track exposes its `CodecDelay` and
+  `SeekPreRoll` in nanoseconds, so a downstream decoder can trim pre-skip and
+  buffer pre-roll.
 - **Frame duration** — a `Block` inside a `BlockGroup` reports its
   `BlockDuration` on every frame it produces.
 - **Reference blocks** — a `BlockGroup`'s `ReferenceBlock` children are exposed
@@ -48,6 +54,33 @@ for t in doc.tracks.entries {
   negative for backward references).
 - **SeekHead / Cues** — the segment's random-access indices are parsed into
   typed seek entries and cue points.
+
+## Frame timing and the downstream contract
+
+The demuxer's job ends at "frames with timing"; presenting them correctly is
+the downstream decoder's job. The contract is:
+
+- **Timecode units.** A `Frame.timecode` is in *ticks*:
+  `cluster timecode + block relative timecode`. Convert to nanoseconds by
+  multiplying by `Info.timecode_scale` (default 1,000,000 ns = 1 ms):
+
+  `timestamp_ns = frame.timecode × info.timecode_scale`
+
+- **Codec delay.** `Track.codec_delay` (from `CodecDelay`, e.g. Opus pre-skip)
+  is the leading span in nanoseconds to discard: subtract it from the first
+  frame's timestamp to get its presentation time. `Track.seek_pre_roll`
+  (`SeekPreRoll`) is how much leading data a decoder must buffer.
+
+- **Frame duration.** A `Frame.duration` is the `BlockDuration` of its
+  `BlockGroup`, in ticks — `0` when absent, in which case the decoder falls
+  back to `Track.default_duration` or the codec's own sample count.
+
+- **Lacing and time.** A laced block carries several frames under one
+  timestamp. The demuxer hands each of them the *same* `timecode` and reports
+  `lacing_index` / `lacing_count`; it does **not** invent per-frame times,
+  because the 2nd..Nth frames' timestamps are a function of the codec's sample
+  duration (e.g. Opus 20 ms frames, VP9 frame rate), which the container does
+  not store. The decoder derives those from `lacing_index` and the codec.
 
 ## Run the demo
 

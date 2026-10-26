@@ -41,6 +41,12 @@ pub fn read_ebml_header(r : Reader) -> EbmlHeader raise MatroskaError {
   if doctype != "matroska" && doctype != "webm" {
     raise InvalidHeader
   }
+  // EBML conformance (RFC 8794): a reader must refuse a document whose
+  // required read version exceeds what it implements. Matroska (v4) and WebM
+  // both declare DocTypeReadVersion 2, so a higher value needs a newer reader.
+  if doctype_read_version > 2 {
+    raise Unsupported("DocTypeReadVersion \{doctype_read_version}")
+  }
   {
     doctype: doctype,
     doctype_version: doctype_version,
